@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html lang="zh">
 <head>
-<title>源代码</title>
+<title>源代碼</title>
 <link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
 </head>
 <body>
@@ -38,87 +38,88 @@
 <span class="sourceLineNo">030</span>import java.util.Collections;<a name="line.30"></a>
 <span class="sourceLineNo">031</span>import java.util.Comparator;<a name="line.31"></a>
 <span class="sourceLineNo">032</span><a name="line.32"></a>
-<span class="sourceLineNo">033</span>public class SchemaDialog {<a name="line.33"></a>
-<span class="sourceLineNo">034</span>  boolean[] checkedSchemaItems;<a name="line.34"></a>
-<span class="sourceLineNo">035</span>  String[] schemaItems;<a name="line.35"></a>
-<span class="sourceLineNo">036</span>  AlertDialog dialog;<a name="line.36"></a>
-<span class="sourceLineNo">037</span><a name="line.37"></a>
-<span class="sourceLineNo">038</span>  public class SortByName implements Comparator&lt;Map&lt;String,String&gt;&gt;{<a name="line.38"></a>
-<span class="sourceLineNo">039</span>    public int compare(Map&lt;String,String&gt; m1, Map&lt;String,String&gt; m2) {<a name="line.39"></a>
-<span class="sourceLineNo">040</span>      String s1 = m1.get("schema_id");<a name="line.40"></a>
-<span class="sourceLineNo">041</span>      String s2 = m2.get("schema_id");<a name="line.41"></a>
-<span class="sourceLineNo">042</span>      return s1.compareTo(s2);<a name="line.42"></a>
-<span class="sourceLineNo">043</span>    }<a name="line.43"></a>
-<span class="sourceLineNo">044</span>  }<a name="line.44"></a>
-<span class="sourceLineNo">045</span><a name="line.45"></a>
-<span class="sourceLineNo">046</span>  private void selectSchema() {<a name="line.46"></a>
-<span class="sourceLineNo">047</span>    List&lt;String&gt; checkedIds = new ArrayList&lt;String&gt;();<a name="line.47"></a>
-<span class="sourceLineNo">048</span>    int i = 0;<a name="line.48"></a>
-<span class="sourceLineNo">049</span>    for (boolean b: checkedSchemaItems) {<a name="line.49"></a>
-<span class="sourceLineNo">050</span>      if (b) checkedIds.add(schemaItems[i]);<a name="line.50"></a>
-<span class="sourceLineNo">051</span>      i++;<a name="line.51"></a>
-<span class="sourceLineNo">052</span>    }<a name="line.52"></a>
-<span class="sourceLineNo">053</span>    int n = checkedIds.size();<a name="line.53"></a>
-<span class="sourceLineNo">054</span>    if (n &gt; 0) {<a name="line.54"></a>
-<span class="sourceLineNo">055</span>      String[] schema_id_list = new String[n];<a name="line.55"></a>
-<span class="sourceLineNo">056</span>      checkedIds.toArray(schema_id_list);<a name="line.56"></a>
-<span class="sourceLineNo">057</span>      Rime.select_schemas(schema_id_list);<a name="line.57"></a>
-<span class="sourceLineNo">058</span>      Pref.deploy();<a name="line.58"></a>
-<span class="sourceLineNo">059</span>    }<a name="line.59"></a>
-<span class="sourceLineNo">060</span>  }<a name="line.60"></a>
-<span class="sourceLineNo">061</span><a name="line.61"></a>
-<span class="sourceLineNo">062</span>  public SchemaDialog(Context context) {<a name="line.62"></a>
-<span class="sourceLineNo">063</span>    List&lt;Map&lt;String,String&gt;&gt; schemas = Rime.get_available_schema_list();<a name="line.63"></a>
-<span class="sourceLineNo">064</span>    if (schemas == null || schemas.size() == 0) {<a name="line.64"></a>
-<span class="sourceLineNo">065</span>      Toast.makeText(context, R.string.no_schemas, Toast.LENGTH_LONG).show();<a name="line.65"></a>
-<span class="sourceLineNo">066</span>      return;<a name="line.66"></a>
-<span class="sourceLineNo">067</span>    }<a name="line.67"></a>
-<span class="sourceLineNo">068</span>    Collections.sort(schemas, new SortByName());<a name="line.68"></a>
-<span class="sourceLineNo">069</span>    List&lt;Map&lt;String,String&gt;&gt; selected_schemas = Rime.get_selected_schema_list();<a name="line.69"></a>
-<span class="sourceLineNo">070</span>    List&lt;String&gt; selected_Ids = new ArrayList&lt;String&gt;();<a name="line.70"></a>
-<span class="sourceLineNo">071</span>    int n = schemas.size();<a name="line.71"></a>
-<span class="sourceLineNo">072</span>    String[] schemaNames = new String[n];<a name="line.72"></a>
-<span class="sourceLineNo">073</span>    String schema_id;<a name="line.73"></a>
-<span class="sourceLineNo">074</span>    checkedSchemaItems = new boolean[n];<a name="line.74"></a>
-<span class="sourceLineNo">075</span>    schemaItems = new String[n];<a name="line.75"></a>
-<span class="sourceLineNo">076</span>    int i = 0;<a name="line.76"></a>
-<span class="sourceLineNo">077</span>    if (selected_schemas.size() &gt; 0) {<a name="line.77"></a>
-<span class="sourceLineNo">078</span>      for (Map&lt;String,String&gt; m: selected_schemas) {<a name="line.78"></a>
-<span class="sourceLineNo">079</span>        selected_Ids.add(m.get("schema_id"));<a name="line.79"></a>
-<span class="sourceLineNo">080</span>      }<a name="line.80"></a>
-<span class="sourceLineNo">081</span>    }<a name="line.81"></a>
-<span class="sourceLineNo">082</span>    for (Map&lt;String,String&gt; m: schemas) {<a name="line.82"></a>
-<span class="sourceLineNo">083</span>      schemaNames[i] = m.get("name");<a name="line.83"></a>
-<span class="sourceLineNo">084</span>      schema_id = m.get("schema_id");<a name="line.84"></a>
-<span class="sourceLineNo">085</span>      schemaItems[i] = schema_id;<a name="line.85"></a>
-<span class="sourceLineNo">086</span>      checkedSchemaItems[i] = selected_Ids.contains(schema_id);<a name="line.86"></a>
-<span class="sourceLineNo">087</span>      i++;<a name="line.87"></a>
-<span class="sourceLineNo">088</span>    }<a name="line.88"></a>
-<span class="sourceLineNo">089</span>    dialog = new AlertDialog.Builder(context)<a name="line.89"></a>
-<span class="sourceLineNo">090</span>      .setTitle(R.string.pref_schemas)<a name="line.90"></a>
-<span class="sourceLineNo">091</span>      .setCancelable(true)<a name="line.91"></a>
-<span class="sourceLineNo">092</span>      .setNegativeButton(android.R.string.cancel, null)<a name="line.92"></a>
-<span class="sourceLineNo">093</span>      .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {<a name="line.93"></a>
-<span class="sourceLineNo">094</span>        public void onClick(DialogInterface di, int id) {<a name="line.94"></a>
-<span class="sourceLineNo">095</span>          selectSchema();<a name="line.95"></a>
-<span class="sourceLineNo">096</span>        }<a name="line.96"></a>
-<span class="sourceLineNo">097</span>      })<a name="line.97"></a>
-<span class="sourceLineNo">098</span>      .setMultiChoiceItems(schemaNames, checkedSchemaItems, new DialogInterface.OnMultiChoiceClickListener() {<a name="line.98"></a>
-<span class="sourceLineNo">099</span>        public void onClick(DialogInterface di, int id, boolean isChecked) {<a name="line.99"></a>
-<span class="sourceLineNo">100</span>          checkedSchemaItems[id] = isChecked;<a name="line.100"></a>
-<span class="sourceLineNo">101</span>        }<a name="line.101"></a>
-<span class="sourceLineNo">102</span>      })<a name="line.102"></a>
-<span class="sourceLineNo">103</span>      .create();<a name="line.103"></a>
-<span class="sourceLineNo">104</span>  }<a name="line.104"></a>
-<span class="sourceLineNo">105</span><a name="line.105"></a>
-<span class="sourceLineNo">106</span>  public AlertDialog getDialog() {<a name="line.106"></a>
-<span class="sourceLineNo">107</span>    return dialog;<a name="line.107"></a>
-<span class="sourceLineNo">108</span>  }<a name="line.108"></a>
-<span class="sourceLineNo">109</span><a name="line.109"></a>
-<span class="sourceLineNo">110</span>  public void show() {<a name="line.110"></a>
-<span class="sourceLineNo">111</span>    if (dialog != null) dialog.show();<a name="line.111"></a>
-<span class="sourceLineNo">112</span>  }<a name="line.112"></a>
-<span class="sourceLineNo">113</span>}<a name="line.113"></a>
+<span class="sourceLineNo">033</span>/** 顯示輸入法方案列表 */<a name="line.33"></a>
+<span class="sourceLineNo">034</span>public class SchemaDialog {<a name="line.34"></a>
+<span class="sourceLineNo">035</span>  boolean[] checkedSchemaItems;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>  String[] schemaItems;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>  AlertDialog dialog;<a name="line.37"></a>
+<span class="sourceLineNo">038</span><a name="line.38"></a>
+<span class="sourceLineNo">039</span>  public class SortByName implements Comparator&lt;Map&lt;String,String&gt;&gt;{<a name="line.39"></a>
+<span class="sourceLineNo">040</span>    public int compare(Map&lt;String,String&gt; m1, Map&lt;String,String&gt; m2) {<a name="line.40"></a>
+<span class="sourceLineNo">041</span>      String s1 = m1.get("schema_id");<a name="line.41"></a>
+<span class="sourceLineNo">042</span>      String s2 = m2.get("schema_id");<a name="line.42"></a>
+<span class="sourceLineNo">043</span>      return s1.compareTo(s2);<a name="line.43"></a>
+<span class="sourceLineNo">044</span>    }<a name="line.44"></a>
+<span class="sourceLineNo">045</span>  }<a name="line.45"></a>
+<span class="sourceLineNo">046</span><a name="line.46"></a>
+<span class="sourceLineNo">047</span>  private void selectSchema() {<a name="line.47"></a>
+<span class="sourceLineNo">048</span>    List&lt;String&gt; checkedIds = new ArrayList&lt;String&gt;();<a name="line.48"></a>
+<span class="sourceLineNo">049</span>    int i = 0;<a name="line.49"></a>
+<span class="sourceLineNo">050</span>    for (boolean b: checkedSchemaItems) {<a name="line.50"></a>
+<span class="sourceLineNo">051</span>      if (b) checkedIds.add(schemaItems[i]);<a name="line.51"></a>
+<span class="sourceLineNo">052</span>      i++;<a name="line.52"></a>
+<span class="sourceLineNo">053</span>    }<a name="line.53"></a>
+<span class="sourceLineNo">054</span>    int n = checkedIds.size();<a name="line.54"></a>
+<span class="sourceLineNo">055</span>    if (n &gt; 0) {<a name="line.55"></a>
+<span class="sourceLineNo">056</span>      String[] schema_id_list = new String[n];<a name="line.56"></a>
+<span class="sourceLineNo">057</span>      checkedIds.toArray(schema_id_list);<a name="line.57"></a>
+<span class="sourceLineNo">058</span>      Rime.select_schemas(schema_id_list);<a name="line.58"></a>
+<span class="sourceLineNo">059</span>      Pref.deploy();<a name="line.59"></a>
+<span class="sourceLineNo">060</span>    }<a name="line.60"></a>
+<span class="sourceLineNo">061</span>  }<a name="line.61"></a>
+<span class="sourceLineNo">062</span><a name="line.62"></a>
+<span class="sourceLineNo">063</span>  public SchemaDialog(Context context) {<a name="line.63"></a>
+<span class="sourceLineNo">064</span>    List&lt;Map&lt;String,String&gt;&gt; schemas = Rime.get_available_schema_list();<a name="line.64"></a>
+<span class="sourceLineNo">065</span>    if (schemas == null || schemas.size() == 0) {<a name="line.65"></a>
+<span class="sourceLineNo">066</span>      Toast.makeText(context, R.string.no_schemas, Toast.LENGTH_LONG).show();<a name="line.66"></a>
+<span class="sourceLineNo">067</span>      return;<a name="line.67"></a>
+<span class="sourceLineNo">068</span>    }<a name="line.68"></a>
+<span class="sourceLineNo">069</span>    Collections.sort(schemas, new SortByName());<a name="line.69"></a>
+<span class="sourceLineNo">070</span>    List&lt;Map&lt;String,String&gt;&gt; selected_schemas = Rime.get_selected_schema_list();<a name="line.70"></a>
+<span class="sourceLineNo">071</span>    List&lt;String&gt; selected_Ids = new ArrayList&lt;String&gt;();<a name="line.71"></a>
+<span class="sourceLineNo">072</span>    int n = schemas.size();<a name="line.72"></a>
+<span class="sourceLineNo">073</span>    String[] schemaNames = new String[n];<a name="line.73"></a>
+<span class="sourceLineNo">074</span>    String schema_id;<a name="line.74"></a>
+<span class="sourceLineNo">075</span>    checkedSchemaItems = new boolean[n];<a name="line.75"></a>
+<span class="sourceLineNo">076</span>    schemaItems = new String[n];<a name="line.76"></a>
+<span class="sourceLineNo">077</span>    int i = 0;<a name="line.77"></a>
+<span class="sourceLineNo">078</span>    if (selected_schemas.size() &gt; 0) {<a name="line.78"></a>
+<span class="sourceLineNo">079</span>      for (Map&lt;String,String&gt; m: selected_schemas) {<a name="line.79"></a>
+<span class="sourceLineNo">080</span>        selected_Ids.add(m.get("schema_id"));<a name="line.80"></a>
+<span class="sourceLineNo">081</span>      }<a name="line.81"></a>
+<span class="sourceLineNo">082</span>    }<a name="line.82"></a>
+<span class="sourceLineNo">083</span>    for (Map&lt;String,String&gt; m: schemas) {<a name="line.83"></a>
+<span class="sourceLineNo">084</span>      schemaNames[i] = m.get("name");<a name="line.84"></a>
+<span class="sourceLineNo">085</span>      schema_id = m.get("schema_id");<a name="line.85"></a>
+<span class="sourceLineNo">086</span>      schemaItems[i] = schema_id;<a name="line.86"></a>
+<span class="sourceLineNo">087</span>      checkedSchemaItems[i] = selected_Ids.contains(schema_id);<a name="line.87"></a>
+<span class="sourceLineNo">088</span>      i++;<a name="line.88"></a>
+<span class="sourceLineNo">089</span>    }<a name="line.89"></a>
+<span class="sourceLineNo">090</span>    dialog = new AlertDialog.Builder(context)<a name="line.90"></a>
+<span class="sourceLineNo">091</span>      .setTitle(R.string.pref_schemas)<a name="line.91"></a>
+<span class="sourceLineNo">092</span>      .setCancelable(true)<a name="line.92"></a>
+<span class="sourceLineNo">093</span>      .setNegativeButton(android.R.string.cancel, null)<a name="line.93"></a>
+<span class="sourceLineNo">094</span>      .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {<a name="line.94"></a>
+<span class="sourceLineNo">095</span>        public void onClick(DialogInterface di, int id) {<a name="line.95"></a>
+<span class="sourceLineNo">096</span>          selectSchema();<a name="line.96"></a>
+<span class="sourceLineNo">097</span>        }<a name="line.97"></a>
+<span class="sourceLineNo">098</span>      })<a name="line.98"></a>
+<span class="sourceLineNo">099</span>      .setMultiChoiceItems(schemaNames, checkedSchemaItems, new DialogInterface.OnMultiChoiceClickListener() {<a name="line.99"></a>
+<span class="sourceLineNo">100</span>        public void onClick(DialogInterface di, int id, boolean isChecked) {<a name="line.100"></a>
+<span class="sourceLineNo">101</span>          checkedSchemaItems[id] = isChecked;<a name="line.101"></a>
+<span class="sourceLineNo">102</span>        }<a name="line.102"></a>
+<span class="sourceLineNo">103</span>      })<a name="line.103"></a>
+<span class="sourceLineNo">104</span>      .create();<a name="line.104"></a>
+<span class="sourceLineNo">105</span>  }<a name="line.105"></a>
+<span class="sourceLineNo">106</span><a name="line.106"></a>
+<span class="sourceLineNo">107</span>  public AlertDialog getDialog() {<a name="line.107"></a>
+<span class="sourceLineNo">108</span>    return dialog;<a name="line.108"></a>
+<span class="sourceLineNo">109</span>  }<a name="line.109"></a>
+<span class="sourceLineNo">110</span><a name="line.110"></a>
+<span class="sourceLineNo">111</span>  public void show() {<a name="line.111"></a>
+<span class="sourceLineNo">112</span>    if (dialog != null) dialog.show();<a name="line.112"></a>
+<span class="sourceLineNo">113</span>  }<a name="line.113"></a>
+<span class="sourceLineNo">114</span>}<a name="line.114"></a>
 
 
 

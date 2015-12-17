@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html lang="zh">
 <head>
-<title>源代码</title>
+<title>源代碼</title>
 <link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
 </head>
 <body>
@@ -44,350 +44,352 @@
 <span class="sourceLineNo">036</span>import java.io.File;<a name="line.36"></a>
 <span class="sourceLineNo">037</span>import java.util.Map;<a name="line.37"></a>
 <span class="sourceLineNo">038</span><a name="line.38"></a>
-<span class="sourceLineNo">039</span>/**<a name="line.39"></a>
-<span class="sourceLineNo">040</span> * View to show candidate words.<a name="line.40"></a>
-<span class="sourceLineNo">041</span> */<a name="line.41"></a>
-<span class="sourceLineNo">042</span>public class Candidate extends View {<a name="line.42"></a>
-<span class="sourceLineNo">043</span><a name="line.43"></a>
-<span class="sourceLineNo">044</span>  /**<a name="line.44"></a>
-<span class="sourceLineNo">045</span>   * Listens to candidate-view actions.<a name="line.45"></a>
-<span class="sourceLineNo">046</span>   */<a name="line.46"></a>
-<span class="sourceLineNo">047</span>  public static interface CandidateListener {<a name="line.47"></a>
-<span class="sourceLineNo">048</span>    void onPickCandidate(int index);<a name="line.48"></a>
-<span class="sourceLineNo">049</span>  }<a name="line.49"></a>
-<span class="sourceLineNo">050</span><a name="line.50"></a>
-<span class="sourceLineNo">051</span>  public static final int MAX_CANDIDATE_COUNT = 20;<a name="line.51"></a>
-<span class="sourceLineNo">052</span>  private static final int CANDIDATE_TOUCH_OFFSET = -12;<a name="line.52"></a>
-<span class="sourceLineNo">053</span><a name="line.53"></a>
-<span class="sourceLineNo">054</span>  private CandidateListener listener;<a name="line.54"></a>
-<span class="sourceLineNo">055</span>  private int highlightIndex;<a name="line.55"></a>
-<span class="sourceLineNo">056</span>  private Rime.RimeCandidate[] candidates;<a name="line.56"></a>
-<span class="sourceLineNo">057</span>  private int num_candidates;<a name="line.57"></a>
-<span class="sourceLineNo">058</span><a name="line.58"></a>
-<span class="sourceLineNo">059</span>  private Drawable candidateHighlight, candidateSeparator;<a name="line.59"></a>
-<span class="sourceLineNo">060</span>  private Paint paintCandidate, paintSymbol, paintComment;<a name="line.60"></a>
-<span class="sourceLineNo">061</span>  private Typeface tfCandidate, tfSymbol, tfComment, tfHanB;<a name="line.61"></a>
-<span class="sourceLineNo">062</span>  private int candidate_text_color, hilited_candidate_text_color;<a name="line.62"></a>
-<span class="sourceLineNo">063</span>  private int comment_text_color, hilited_comment_text_color;<a name="line.63"></a>
-<span class="sourceLineNo">064</span>  private int candidate_text_size, comment_text_size;<a name="line.64"></a>
-<span class="sourceLineNo">065</span>  private int candidate_view_height, comment_height;<a name="line.65"></a>
-<span class="sourceLineNo">066</span>  private boolean show_comment, comment_on_top;<a name="line.66"></a>
-<span class="sourceLineNo">067</span><a name="line.67"></a>
-<span class="sourceLineNo">068</span>  private Rect candidateRect[] = new Rect[MAX_CANDIDATE_COUNT];<a name="line.68"></a>
-<span class="sourceLineNo">069</span><a name="line.69"></a>
-<span class="sourceLineNo">070</span>  public void reset() {<a name="line.70"></a>
-<span class="sourceLineNo">071</span>    Config config = Config.get();<a name="line.71"></a>
-<span class="sourceLineNo">072</span>    candidateHighlight = new PaintDrawable(config.getColor("hilited_candidate_back_color"));<a name="line.72"></a>
-<span class="sourceLineNo">073</span>    ((PaintDrawable)candidateHighlight).setCornerRadius(config.getFloat("round_corner"));<a name="line.73"></a>
-<span class="sourceLineNo">074</span>    candidateSeparator = new PaintDrawable(config.getColor("candidate_separator_color"));<a name="line.74"></a>
-<span class="sourceLineNo">075</span><a name="line.75"></a>
-<span class="sourceLineNo">076</span>    candidate_text_color = config.getColor("candidate_text_color");<a name="line.76"></a>
-<span class="sourceLineNo">077</span>    comment_text_color = config.getColor("comment_text_color");<a name="line.77"></a>
-<span class="sourceLineNo">078</span>    hilited_candidate_text_color = config.getColor("hilited_candidate_text_color");<a name="line.78"></a>
-<span class="sourceLineNo">079</span>    hilited_comment_text_color = config.getColor("hilited_comment_text_color");<a name="line.79"></a>
-<span class="sourceLineNo">080</span><a name="line.80"></a>
-<span class="sourceLineNo">081</span>    candidate_text_size = config.getPixel("candidate_text_size");<a name="line.81"></a>
-<span class="sourceLineNo">082</span>    comment_text_size = config.getPixel("comment_text_size");<a name="line.82"></a>
-<span class="sourceLineNo">083</span>    candidate_view_height = config.getPixel("candidate_view_height");<a name="line.83"></a>
-<span class="sourceLineNo">084</span>    comment_height = config.getPixel("comment_height");<a name="line.84"></a>
-<span class="sourceLineNo">085</span><a name="line.85"></a>
-<span class="sourceLineNo">086</span>    tfCandidate = config.getFont("candidate_font");<a name="line.86"></a>
-<span class="sourceLineNo">087</span>    tfHanB = config.getFont("hanb_font");<a name="line.87"></a>
-<span class="sourceLineNo">088</span>    tfComment = config.getFont("comment_font");<a name="line.88"></a>
-<span class="sourceLineNo">089</span>    tfSymbol = config.getFont("symbol_font");<a name="line.89"></a>
-<span class="sourceLineNo">090</span><a name="line.90"></a>
-<span class="sourceLineNo">091</span>    paintCandidate.setTextSize(candidate_text_size);<a name="line.91"></a>
-<span class="sourceLineNo">092</span>    paintCandidate.setTypeface(tfCandidate);<a name="line.92"></a>
-<span class="sourceLineNo">093</span>    paintSymbol.setTextSize(candidate_text_size);<a name="line.93"></a>
-<span class="sourceLineNo">094</span>    paintSymbol.setTypeface(tfSymbol);<a name="line.94"></a>
-<span class="sourceLineNo">095</span>    paintComment.setTextSize(comment_text_size);<a name="line.95"></a>
-<span class="sourceLineNo">096</span>    paintComment.setTypeface(tfComment);<a name="line.96"></a>
-<span class="sourceLineNo">097</span><a name="line.97"></a>
-<span class="sourceLineNo">098</span>    show_comment = config.getBoolean("show_comment");<a name="line.98"></a>
-<span class="sourceLineNo">099</span>    boolean show = config.getBoolean("show_candidate");<a name="line.99"></a>
-<span class="sourceLineNo">100</span>    setVisibility(show ? View.VISIBLE : View.GONE);<a name="line.100"></a>
-<span class="sourceLineNo">101</span>    comment_on_top = config.getBoolean("comment_on_top");<a name="line.101"></a>
-<span class="sourceLineNo">102</span>    invalidate();<a name="line.102"></a>
-<span class="sourceLineNo">103</span>  }<a name="line.103"></a>
-<span class="sourceLineNo">104</span><a name="line.104"></a>
-<span class="sourceLineNo">105</span>  public Candidate(Context context, AttributeSet attrs) {<a name="line.105"></a>
-<span class="sourceLineNo">106</span>    super(context, attrs);<a name="line.106"></a>
-<span class="sourceLineNo">107</span>    paintCandidate = new Paint();<a name="line.107"></a>
-<span class="sourceLineNo">108</span>    paintCandidate.setAntiAlias(true);<a name="line.108"></a>
-<span class="sourceLineNo">109</span>    paintCandidate.setStrokeWidth(0);<a name="line.109"></a>
-<span class="sourceLineNo">110</span>    paintSymbol = new Paint();<a name="line.110"></a>
-<span class="sourceLineNo">111</span>    paintSymbol.setAntiAlias(true);<a name="line.111"></a>
-<span class="sourceLineNo">112</span>    paintSymbol.setStrokeWidth(0);<a name="line.112"></a>
-<span class="sourceLineNo">113</span>    paintComment = new Paint();<a name="line.113"></a>
-<span class="sourceLineNo">114</span>    paintComment.setAntiAlias(true);<a name="line.114"></a>
-<span class="sourceLineNo">115</span>    paintComment.setStrokeWidth(0);<a name="line.115"></a>
-<span class="sourceLineNo">116</span><a name="line.116"></a>
-<span class="sourceLineNo">117</span>    reset();<a name="line.117"></a>
-<span class="sourceLineNo">118</span><a name="line.118"></a>
-<span class="sourceLineNo">119</span>    setWillNotDraw(false);<a name="line.119"></a>
+<span class="sourceLineNo">039</span>/** 顯示候選字詞 */<a name="line.39"></a>
+<span class="sourceLineNo">040</span>public class Candidate extends View {<a name="line.40"></a>
+<span class="sourceLineNo">041</span><a name="line.41"></a>
+<span class="sourceLineNo">042</span>  /** 處理候選條選字事件 */<a name="line.42"></a>
+<span class="sourceLineNo">043</span>  public static interface CandidateListener {<a name="line.43"></a>
+<span class="sourceLineNo">044</span>    void onPickCandidate(int index);<a name="line.44"></a>
+<span class="sourceLineNo">045</span>  }<a name="line.45"></a>
+<span class="sourceLineNo">046</span><a name="line.46"></a>
+<span class="sourceLineNo">047</span>  public static final int MAX_CANDIDATE_COUNT = 20;<a name="line.47"></a>
+<span class="sourceLineNo">048</span>  private static final int CANDIDATE_TOUCH_OFFSET = -12;<a name="line.48"></a>
+<span class="sourceLineNo">049</span><a name="line.49"></a>
+<span class="sourceLineNo">050</span>  private CandidateListener listener;<a name="line.50"></a>
+<span class="sourceLineNo">051</span>  private int highlightIndex;<a name="line.51"></a>
+<span class="sourceLineNo">052</span>  private Rime.RimeCandidate[] candidates;<a name="line.52"></a>
+<span class="sourceLineNo">053</span>  private int num_candidates;<a name="line.53"></a>
+<span class="sourceLineNo">054</span><a name="line.54"></a>
+<span class="sourceLineNo">055</span>  private Drawable candidateHighlight, candidateSeparator;<a name="line.55"></a>
+<span class="sourceLineNo">056</span>  private Paint paintCandidate, paintSymbol, paintComment;<a name="line.56"></a>
+<span class="sourceLineNo">057</span>  private Typeface tfCandidate, tfSymbol, tfComment, tfHanB;<a name="line.57"></a>
+<span class="sourceLineNo">058</span>  private int candidate_text_color, hilited_candidate_text_color;<a name="line.58"></a>
+<span class="sourceLineNo">059</span>  private int comment_text_color, hilited_comment_text_color;<a name="line.59"></a>
+<span class="sourceLineNo">060</span>  private int candidate_text_size, comment_text_size;<a name="line.60"></a>
+<span class="sourceLineNo">061</span>  private int candidate_view_height, comment_height;<a name="line.61"></a>
+<span class="sourceLineNo">062</span>  private boolean show_comment, comment_on_top;<a name="line.62"></a>
+<span class="sourceLineNo">063</span><a name="line.63"></a>
+<span class="sourceLineNo">064</span>  private Rect candidateRect[] = new Rect[MAX_CANDIDATE_COUNT];<a name="line.64"></a>
+<span class="sourceLineNo">065</span><a name="line.65"></a>
+<span class="sourceLineNo">066</span>  public void reset() {<a name="line.66"></a>
+<span class="sourceLineNo">067</span>    Config config = Config.get();<a name="line.67"></a>
+<span class="sourceLineNo">068</span>    candidateHighlight = new PaintDrawable(config.getColor("hilited_candidate_back_color"));<a name="line.68"></a>
+<span class="sourceLineNo">069</span>    ((PaintDrawable)candidateHighlight).setCornerRadius(config.getFloat("round_corner"));<a name="line.69"></a>
+<span class="sourceLineNo">070</span>    candidateSeparator = new PaintDrawable(config.getColor("candidate_separator_color"));<a name="line.70"></a>
+<span class="sourceLineNo">071</span><a name="line.71"></a>
+<span class="sourceLineNo">072</span>    candidate_text_color = config.getColor("candidate_text_color");<a name="line.72"></a>
+<span class="sourceLineNo">073</span>    comment_text_color = config.getColor("comment_text_color");<a name="line.73"></a>
+<span class="sourceLineNo">074</span>    hilited_candidate_text_color = config.getColor("hilited_candidate_text_color");<a name="line.74"></a>
+<span class="sourceLineNo">075</span>    hilited_comment_text_color = config.getColor("hilited_comment_text_color");<a name="line.75"></a>
+<span class="sourceLineNo">076</span><a name="line.76"></a>
+<span class="sourceLineNo">077</span>    candidate_text_size = config.getPixel("candidate_text_size");<a name="line.77"></a>
+<span class="sourceLineNo">078</span>    comment_text_size = config.getPixel("comment_text_size");<a name="line.78"></a>
+<span class="sourceLineNo">079</span>    candidate_view_height = config.getPixel("candidate_view_height");<a name="line.79"></a>
+<span class="sourceLineNo">080</span>    comment_height = config.getPixel("comment_height");<a name="line.80"></a>
+<span class="sourceLineNo">081</span><a name="line.81"></a>
+<span class="sourceLineNo">082</span>    tfCandidate = config.getFont("candidate_font");<a name="line.82"></a>
+<span class="sourceLineNo">083</span>    tfHanB = config.getFont("hanb_font");<a name="line.83"></a>
+<span class="sourceLineNo">084</span>    tfComment = config.getFont("comment_font");<a name="line.84"></a>
+<span class="sourceLineNo">085</span>    tfSymbol = config.getFont("symbol_font");<a name="line.85"></a>
+<span class="sourceLineNo">086</span><a name="line.86"></a>
+<span class="sourceLineNo">087</span>    paintCandidate.setTextSize(candidate_text_size);<a name="line.87"></a>
+<span class="sourceLineNo">088</span>    paintCandidate.setTypeface(tfCandidate);<a name="line.88"></a>
+<span class="sourceLineNo">089</span>    paintSymbol.setTextSize(candidate_text_size);<a name="line.89"></a>
+<span class="sourceLineNo">090</span>    paintSymbol.setTypeface(tfSymbol);<a name="line.90"></a>
+<span class="sourceLineNo">091</span>    paintComment.setTextSize(comment_text_size);<a name="line.91"></a>
+<span class="sourceLineNo">092</span>    paintComment.setTypeface(tfComment);<a name="line.92"></a>
+<span class="sourceLineNo">093</span><a name="line.93"></a>
+<span class="sourceLineNo">094</span>    show_comment = config.getBoolean("show_comment");<a name="line.94"></a>
+<span class="sourceLineNo">095</span>    boolean show = config.getBoolean("show_candidate");<a name="line.95"></a>
+<span class="sourceLineNo">096</span>    setVisibility(show ? View.VISIBLE : View.GONE);<a name="line.96"></a>
+<span class="sourceLineNo">097</span>    comment_on_top = config.getBoolean("comment_on_top");<a name="line.97"></a>
+<span class="sourceLineNo">098</span>    invalidate();<a name="line.98"></a>
+<span class="sourceLineNo">099</span>  }<a name="line.99"></a>
+<span class="sourceLineNo">100</span><a name="line.100"></a>
+<span class="sourceLineNo">101</span>  public Candidate(Context context, AttributeSet attrs) {<a name="line.101"></a>
+<span class="sourceLineNo">102</span>    super(context, attrs);<a name="line.102"></a>
+<span class="sourceLineNo">103</span>    paintCandidate = new Paint();<a name="line.103"></a>
+<span class="sourceLineNo">104</span>    paintCandidate.setAntiAlias(true);<a name="line.104"></a>
+<span class="sourceLineNo">105</span>    paintCandidate.setStrokeWidth(0);<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    paintSymbol = new Paint();<a name="line.106"></a>
+<span class="sourceLineNo">107</span>    paintSymbol.setAntiAlias(true);<a name="line.107"></a>
+<span class="sourceLineNo">108</span>    paintSymbol.setStrokeWidth(0);<a name="line.108"></a>
+<span class="sourceLineNo">109</span>    paintComment = new Paint();<a name="line.109"></a>
+<span class="sourceLineNo">110</span>    paintComment.setAntiAlias(true);<a name="line.110"></a>
+<span class="sourceLineNo">111</span>    paintComment.setStrokeWidth(0);<a name="line.111"></a>
+<span class="sourceLineNo">112</span><a name="line.112"></a>
+<span class="sourceLineNo">113</span>    reset();<a name="line.113"></a>
+<span class="sourceLineNo">114</span><a name="line.114"></a>
+<span class="sourceLineNo">115</span>    setWillNotDraw(false);<a name="line.115"></a>
+<span class="sourceLineNo">116</span>  }<a name="line.116"></a>
+<span class="sourceLineNo">117</span>  <a name="line.117"></a>
+<span class="sourceLineNo">118</span>  public void setCandidateListener(CandidateListener listener) {<a name="line.118"></a>
+<span class="sourceLineNo">119</span>    this.listener = listener;<a name="line.119"></a>
 <span class="sourceLineNo">120</span>  }<a name="line.120"></a>
-<span class="sourceLineNo">121</span>  <a name="line.121"></a>
-<span class="sourceLineNo">122</span>  public void setCandidateListener(CandidateListener listener) {<a name="line.122"></a>
-<span class="sourceLineNo">123</span>    this.listener = listener;<a name="line.123"></a>
-<span class="sourceLineNo">124</span>  }<a name="line.124"></a>
-<span class="sourceLineNo">125</span><a name="line.125"></a>
-<span class="sourceLineNo">126</span>  /**<a name="line.126"></a>
-<span class="sourceLineNo">127</span>   * Highlight the first candidate as the default candidate.<a name="line.127"></a>
-<span class="sourceLineNo">128</span>   */<a name="line.128"></a>
-<span class="sourceLineNo">129</span>  public void setText() {<a name="line.129"></a>
-<span class="sourceLineNo">130</span>    removeHighlight();<a name="line.130"></a>
-<span class="sourceLineNo">131</span>    updateCandidateWidth();<a name="line.131"></a>
-<span class="sourceLineNo">132</span>    if (getCandNum() &gt; 0) {<a name="line.132"></a>
-<span class="sourceLineNo">133</span>      invalidate();<a name="line.133"></a>
-<span class="sourceLineNo">134</span>    }<a name="line.134"></a>
-<span class="sourceLineNo">135</span>  }<a name="line.135"></a>
-<span class="sourceLineNo">136</span><a name="line.136"></a>
-<span class="sourceLineNo">137</span>  /**<a name="line.137"></a>
-<span class="sourceLineNo">138</span>   * Picks the highlighted candidate.<a name="line.138"></a>
-<span class="sourceLineNo">139</span>   *<a name="line.139"></a>
-<span class="sourceLineNo">140</span>   * @return {@code false} if no candidate is highlighted and picked.<a name="line.140"></a>
-<span class="sourceLineNo">141</span>   */<a name="line.141"></a>
-<span class="sourceLineNo">142</span>  public boolean pickHighlighted(int index) {<a name="line.142"></a>
-<span class="sourceLineNo">143</span>    if ((highlightIndex != -1) &amp;&amp; (listener != null)) {<a name="line.143"></a>
-<span class="sourceLineNo">144</span>      listener.onPickCandidate(index == -1 ? highlightIndex : index);<a name="line.144"></a>
-<span class="sourceLineNo">145</span>      return true;<a name="line.145"></a>
-<span class="sourceLineNo">146</span>    }<a name="line.146"></a>
-<span class="sourceLineNo">147</span>    return false;<a name="line.147"></a>
-<span class="sourceLineNo">148</span>  }<a name="line.148"></a>
-<span class="sourceLineNo">149</span><a name="line.149"></a>
-<span class="sourceLineNo">150</span>  private boolean updateHighlight(int x, int y) {<a name="line.150"></a>
-<span class="sourceLineNo">151</span>    int index = getCandidateIndex(x, y);<a name="line.151"></a>
-<span class="sourceLineNo">152</span>    if (index != -1) {<a name="line.152"></a>
-<span class="sourceLineNo">153</span>      highlightIndex = index;<a name="line.153"></a>
-<span class="sourceLineNo">154</span>      invalidate();<a name="line.154"></a>
-<span class="sourceLineNo">155</span>      return true;<a name="line.155"></a>
-<span class="sourceLineNo">156</span>    }<a name="line.156"></a>
-<span class="sourceLineNo">157</span>    return false;<a name="line.157"></a>
-<span class="sourceLineNo">158</span>  }<a name="line.158"></a>
-<span class="sourceLineNo">159</span><a name="line.159"></a>
-<span class="sourceLineNo">160</span>  private void removeHighlight() {<a name="line.160"></a>
-<span class="sourceLineNo">161</span>    highlightIndex = -1;<a name="line.161"></a>
-<span class="sourceLineNo">162</span>    invalidate();<a name="line.162"></a>
-<span class="sourceLineNo">163</span>    requestLayout();<a name="line.163"></a>
-<span class="sourceLineNo">164</span>  }<a name="line.164"></a>
-<span class="sourceLineNo">165</span><a name="line.165"></a>
-<span class="sourceLineNo">166</span>  private void drawHighlight(Canvas canvas) {<a name="line.166"></a>
-<span class="sourceLineNo">167</span>    if (highlightIndex &gt;= 0) {<a name="line.167"></a>
-<span class="sourceLineNo">168</span>      candidateHighlight.setBounds(candidateRect[highlightIndex]);<a name="line.168"></a>
-<span class="sourceLineNo">169</span>      candidateHighlight.draw(canvas);<a name="line.169"></a>
-<span class="sourceLineNo">170</span>    }<a name="line.170"></a>
-<span class="sourceLineNo">171</span>  }<a name="line.171"></a>
-<span class="sourceLineNo">172</span><a name="line.172"></a>
-<span class="sourceLineNo">173</span>  private void drawText(String s, Canvas canvas, Paint paint, Typeface font, float center, float y) {<a name="line.173"></a>
-<span class="sourceLineNo">174</span>    if (s == null) return;<a name="line.174"></a>
-<span class="sourceLineNo">175</span>    int length = s.length();<a name="line.175"></a>
-<span class="sourceLineNo">176</span>    if (length == 0) return;<a name="line.176"></a>
-<span class="sourceLineNo">177</span>    int points = s.codePointCount(0, length);<a name="line.177"></a>
-<span class="sourceLineNo">178</span>    float x = center - paint.measureText(s) / 2;<a name="line.178"></a>
-<span class="sourceLineNo">179</span>    if (tfHanB != null &amp;&amp; length &gt; points) {<a name="line.179"></a>
-<span class="sourceLineNo">180</span>      for (int offset = 0; offset &lt; length; ) {<a name="line.180"></a>
-<span class="sourceLineNo">181</span>        int codepoint = s.codePointAt(offset);<a name="line.181"></a>
-<span class="sourceLineNo">182</span>        int charCount = Character.charCount(codepoint);<a name="line.182"></a>
-<span class="sourceLineNo">183</span>        int end = offset + charCount;<a name="line.183"></a>
-<span class="sourceLineNo">184</span>        paint.setTypeface(Character.isSupplementaryCodePoint(codepoint) ? tfHanB : font);<a name="line.184"></a>
-<span class="sourceLineNo">185</span>        canvas.drawText(s, offset, end, x, y, paint);<a name="line.185"></a>
-<span class="sourceLineNo">186</span>        x += paint.measureText(s, offset, end);<a name="line.186"></a>
-<span class="sourceLineNo">187</span>        offset += charCount;<a name="line.187"></a>
-<span class="sourceLineNo">188</span>      }<a name="line.188"></a>
-<span class="sourceLineNo">189</span>    } else {<a name="line.189"></a>
-<span class="sourceLineNo">190</span>      paint.setTypeface(font);<a name="line.190"></a>
-<span class="sourceLineNo">191</span>      canvas.drawText(s, x, y, paint);<a name="line.191"></a>
-<span class="sourceLineNo">192</span>    }<a name="line.192"></a>
-<span class="sourceLineNo">193</span>  }<a name="line.193"></a>
+<span class="sourceLineNo">121</span><a name="line.121"></a>
+<span class="sourceLineNo">122</span>  /**<a name="line.122"></a>
+<span class="sourceLineNo">123</span>   * Highlight the first candidate as the default candidate.<a name="line.123"></a>
+<span class="sourceLineNo">124</span>   */<a name="line.124"></a>
+<span class="sourceLineNo">125</span>  public void setText() {<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    removeHighlight();<a name="line.126"></a>
+<span class="sourceLineNo">127</span>    updateCandidateWidth();<a name="line.127"></a>
+<span class="sourceLineNo">128</span>    if (getCandNum() &gt; 0) {<a name="line.128"></a>
+<span class="sourceLineNo">129</span>      invalidate();<a name="line.129"></a>
+<span class="sourceLineNo">130</span>    }<a name="line.130"></a>
+<span class="sourceLineNo">131</span>  }<a name="line.131"></a>
+<span class="sourceLineNo">132</span><a name="line.132"></a>
+<span class="sourceLineNo">133</span>  /**<a name="line.133"></a>
+<span class="sourceLineNo">134</span>   * 選取候選項<a name="line.134"></a>
+<span class="sourceLineNo">135</span>   *<a name="line.135"></a>
+<span class="sourceLineNo">136</span>   * @param index 候選項序號（從0開始），{@code -1}表示選擇當前高亮候選項<a name="line.136"></a>
+<span class="sourceLineNo">137</span>   * @return 是否成功選字<a name="line.137"></a>
+<span class="sourceLineNo">138</span>   */<a name="line.138"></a>
+<span class="sourceLineNo">139</span>  public boolean pickHighlighted(int index) {<a name="line.139"></a>
+<span class="sourceLineNo">140</span>    if ((highlightIndex != -1) &amp;&amp; (listener != null)) {<a name="line.140"></a>
+<span class="sourceLineNo">141</span>      listener.onPickCandidate(index == -1 ? highlightIndex : index);<a name="line.141"></a>
+<span class="sourceLineNo">142</span>      return true;<a name="line.142"></a>
+<span class="sourceLineNo">143</span>    }<a name="line.143"></a>
+<span class="sourceLineNo">144</span>    return false;<a name="line.144"></a>
+<span class="sourceLineNo">145</span>  }<a name="line.145"></a>
+<span class="sourceLineNo">146</span><a name="line.146"></a>
+<span class="sourceLineNo">147</span>  private boolean updateHighlight(int x, int y) {<a name="line.147"></a>
+<span class="sourceLineNo">148</span>    int index = getCandidateIndex(x, y);<a name="line.148"></a>
+<span class="sourceLineNo">149</span>    if (index != -1) {<a name="line.149"></a>
+<span class="sourceLineNo">150</span>      highlightIndex = index;<a name="line.150"></a>
+<span class="sourceLineNo">151</span>      invalidate();<a name="line.151"></a>
+<span class="sourceLineNo">152</span>      return true;<a name="line.152"></a>
+<span class="sourceLineNo">153</span>    }<a name="line.153"></a>
+<span class="sourceLineNo">154</span>    return false;<a name="line.154"></a>
+<span class="sourceLineNo">155</span>  }<a name="line.155"></a>
+<span class="sourceLineNo">156</span><a name="line.156"></a>
+<span class="sourceLineNo">157</span>  private void removeHighlight() {<a name="line.157"></a>
+<span class="sourceLineNo">158</span>    highlightIndex = -1;<a name="line.158"></a>
+<span class="sourceLineNo">159</span>    invalidate();<a name="line.159"></a>
+<span class="sourceLineNo">160</span>    requestLayout();<a name="line.160"></a>
+<span class="sourceLineNo">161</span>  }<a name="line.161"></a>
+<span class="sourceLineNo">162</span><a name="line.162"></a>
+<span class="sourceLineNo">163</span>  private void drawHighlight(Canvas canvas) {<a name="line.163"></a>
+<span class="sourceLineNo">164</span>    if (highlightIndex &gt;= 0) {<a name="line.164"></a>
+<span class="sourceLineNo">165</span>      candidateHighlight.setBounds(candidateRect[highlightIndex]);<a name="line.165"></a>
+<span class="sourceLineNo">166</span>      candidateHighlight.draw(canvas);<a name="line.166"></a>
+<span class="sourceLineNo">167</span>    }<a name="line.167"></a>
+<span class="sourceLineNo">168</span>  }<a name="line.168"></a>
+<span class="sourceLineNo">169</span><a name="line.169"></a>
+<span class="sourceLineNo">170</span>  private void drawText(String s, Canvas canvas, Paint paint, Typeface font, float center, float y) {<a name="line.170"></a>
+<span class="sourceLineNo">171</span>    if (s == null) return;<a name="line.171"></a>
+<span class="sourceLineNo">172</span>    int length = s.length();<a name="line.172"></a>
+<span class="sourceLineNo">173</span>    if (length == 0) return;<a name="line.173"></a>
+<span class="sourceLineNo">174</span>    int points = s.codePointCount(0, length);<a name="line.174"></a>
+<span class="sourceLineNo">175</span>    float x = center - paint.measureText(s) / 2;<a name="line.175"></a>
+<span class="sourceLineNo">176</span>    if (tfHanB != null &amp;&amp; length &gt; points) {<a name="line.176"></a>
+<span class="sourceLineNo">177</span>      for (int offset = 0; offset &lt; length; ) {<a name="line.177"></a>
+<span class="sourceLineNo">178</span>        int codepoint = s.codePointAt(offset);<a name="line.178"></a>
+<span class="sourceLineNo">179</span>        int charCount = Character.charCount(codepoint);<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        int end = offset + charCount;<a name="line.180"></a>
+<span class="sourceLineNo">181</span>        paint.setTypeface(Character.isSupplementaryCodePoint(codepoint) ? tfHanB : font);<a name="line.181"></a>
+<span class="sourceLineNo">182</span>        canvas.drawText(s, offset, end, x, y, paint);<a name="line.182"></a>
+<span class="sourceLineNo">183</span>        x += paint.measureText(s, offset, end);<a name="line.183"></a>
+<span class="sourceLineNo">184</span>        offset += charCount;<a name="line.184"></a>
+<span class="sourceLineNo">185</span>      }<a name="line.185"></a>
+<span class="sourceLineNo">186</span>    } else {<a name="line.186"></a>
+<span class="sourceLineNo">187</span>      paint.setTypeface(font);<a name="line.187"></a>
+<span class="sourceLineNo">188</span>      canvas.drawText(s, x, y, paint);<a name="line.188"></a>
+<span class="sourceLineNo">189</span>    }<a name="line.189"></a>
+<span class="sourceLineNo">190</span>  }<a name="line.190"></a>
+<span class="sourceLineNo">191</span><a name="line.191"></a>
+<span class="sourceLineNo">192</span>  private void drawCandidates(Canvas canvas) {<a name="line.192"></a>
+<span class="sourceLineNo">193</span>    if (candidates == null) return;<a name="line.193"></a>
 <span class="sourceLineNo">194</span><a name="line.194"></a>
-<span class="sourceLineNo">195</span>  private void drawCandidates(Canvas canvas) {<a name="line.195"></a>
-<span class="sourceLineNo">196</span>    if (candidates == null) return;<a name="line.196"></a>
-<span class="sourceLineNo">197</span><a name="line.197"></a>
-<span class="sourceLineNo">198</span>    float x = 0;<a name="line.198"></a>
-<span class="sourceLineNo">199</span>    float y = 0;<a name="line.199"></a>
-<span class="sourceLineNo">200</span>    int i = 0;<a name="line.200"></a>
-<span class="sourceLineNo">201</span>    float comment_x, comment_y;<a name="line.201"></a>
-<span class="sourceLineNo">202</span>    float comment_width;<a name="line.202"></a>
-<span class="sourceLineNo">203</span>    String candidate, comment;<a name="line.203"></a>
-<span class="sourceLineNo">204</span><a name="line.204"></a>
-<span class="sourceLineNo">205</span>    y = candidateRect[0].centerY() - (paintCandidate.ascent() + paintCandidate.descent()) / 2;<a name="line.205"></a>
-<span class="sourceLineNo">206</span>    if (show_comment &amp;&amp; comment_on_top) y += comment_height / 2;<a name="line.206"></a>
-<span class="sourceLineNo">207</span>    comment_y = comment_height / 2 - (paintComment.ascent() + paintComment.descent()) / 2;<a name="line.207"></a>
-<span class="sourceLineNo">208</span>    if (show_comment &amp;&amp; !comment_on_top) comment_y += candidateRect[0].bottom - comment_height;<a name="line.208"></a>
-<span class="sourceLineNo">209</span><a name="line.209"></a>
-<span class="sourceLineNo">210</span>    while (i &lt; num_candidates) {<a name="line.210"></a>
-<span class="sourceLineNo">211</span>      // Calculate a position where the text could be centered in the rectangle.<a name="line.211"></a>
-<span class="sourceLineNo">212</span>      x = candidateRect[i].centerX();<a name="line.212"></a>
-<span class="sourceLineNo">213</span>      if (show_comment) {<a name="line.213"></a>
-<span class="sourceLineNo">214</span>        comment = getComment(i);<a name="line.214"></a>
-<span class="sourceLineNo">215</span>        if (comment != null &amp;&amp; !comment.isEmpty()) {<a name="line.215"></a>
-<span class="sourceLineNo">216</span>          comment_width = paintComment.measureText(comment);<a name="line.216"></a>
-<span class="sourceLineNo">217</span>          if (comment_on_top) {<a name="line.217"></a>
-<span class="sourceLineNo">218</span>            comment_x = candidateRect[i].centerX();<a name="line.218"></a>
-<span class="sourceLineNo">219</span>          } else {<a name="line.219"></a>
-<span class="sourceLineNo">220</span>            x -= comment_width / 2;<a name="line.220"></a>
-<span class="sourceLineNo">221</span>            comment_x = candidateRect[i].right -  comment_width / 2;<a name="line.221"></a>
-<span class="sourceLineNo">222</span>          }<a name="line.222"></a>
-<span class="sourceLineNo">223</span>          paintComment.setColor(highlightIndex == i ? hilited_comment_text_color : comment_text_color);<a name="line.223"></a>
-<span class="sourceLineNo">224</span>          drawText(comment, canvas, paintComment, tfComment, comment_x, comment_y);<a name="line.224"></a>
-<span class="sourceLineNo">225</span>        }<a name="line.225"></a>
-<span class="sourceLineNo">226</span>      }<a name="line.226"></a>
-<span class="sourceLineNo">227</span>      paintCandidate.setColor(highlightIndex == i ? hilited_candidate_text_color : candidate_text_color);<a name="line.227"></a>
-<span class="sourceLineNo">228</span>      drawText(getCandidate(i), canvas, paintCandidate, tfCandidate, x, y);<a name="line.228"></a>
-<span class="sourceLineNo">229</span>      // Draw the separator at the right edge of each candidate.<a name="line.229"></a>
-<span class="sourceLineNo">230</span>      candidateSeparator.setBounds(<a name="line.230"></a>
-<span class="sourceLineNo">231</span>        candidateRect[i].right - candidateSeparator.getIntrinsicWidth(),<a name="line.231"></a>
-<span class="sourceLineNo">232</span>        candidateRect[i].top,<a name="line.232"></a>
-<span class="sourceLineNo">233</span>        candidateRect[i].right,<a name="line.233"></a>
-<span class="sourceLineNo">234</span>        candidateRect[i].bottom);<a name="line.234"></a>
-<span class="sourceLineNo">235</span>      candidateSeparator.draw(canvas);<a name="line.235"></a>
-<span class="sourceLineNo">236</span>      i++;<a name="line.236"></a>
-<span class="sourceLineNo">237</span>    }<a name="line.237"></a>
-<span class="sourceLineNo">238</span>    for (int j = -4; j &gt;= -5; j--) { // -4: left, -5: right<a name="line.238"></a>
-<span class="sourceLineNo">239</span>      candidate = getCandidate(j);<a name="line.239"></a>
-<span class="sourceLineNo">240</span>      if (candidate == null) continue;<a name="line.240"></a>
-<span class="sourceLineNo">241</span>      paintSymbol.setColor(highlightIndex == i ? hilited_comment_text_color : comment_text_color);<a name="line.241"></a>
-<span class="sourceLineNo">242</span>      x = candidateRect[i].centerX() - paintSymbol.measureText(candidate) / 2;<a name="line.242"></a>
-<span class="sourceLineNo">243</span>      canvas.drawText(candidate, x, y, paintSymbol);<a name="line.243"></a>
-<span class="sourceLineNo">244</span>      candidateSeparator.setBounds(<a name="line.244"></a>
-<span class="sourceLineNo">245</span>        candidateRect[i].right - candidateSeparator.getIntrinsicWidth(),<a name="line.245"></a>
-<span class="sourceLineNo">246</span>        candidateRect[i].top,<a name="line.246"></a>
-<span class="sourceLineNo">247</span>        candidateRect[i].right,<a name="line.247"></a>
-<span class="sourceLineNo">248</span>        candidateRect[i].bottom);<a name="line.248"></a>
-<span class="sourceLineNo">249</span>      candidateSeparator.draw(canvas);<a name="line.249"></a>
-<span class="sourceLineNo">250</span>      i++;<a name="line.250"></a>
-<span class="sourceLineNo">251</span>    }<a name="line.251"></a>
-<span class="sourceLineNo">252</span>  }<a name="line.252"></a>
-<span class="sourceLineNo">253</span><a name="line.253"></a>
-<span class="sourceLineNo">254</span>  @Override<a name="line.254"></a>
-<span class="sourceLineNo">255</span>  protected void onDraw(Canvas canvas) {<a name="line.255"></a>
-<span class="sourceLineNo">256</span>    if (canvas == null) {<a name="line.256"></a>
-<span class="sourceLineNo">257</span>      return;<a name="line.257"></a>
-<span class="sourceLineNo">258</span>    }<a name="line.258"></a>
-<span class="sourceLineNo">259</span>    super.onDraw(canvas);<a name="line.259"></a>
-<span class="sourceLineNo">260</span><a name="line.260"></a>
-<span class="sourceLineNo">261</span>    drawHighlight(canvas);<a name="line.261"></a>
-<span class="sourceLineNo">262</span>    drawCandidates(canvas);<a name="line.262"></a>
-<span class="sourceLineNo">263</span>  }<a name="line.263"></a>
-<span class="sourceLineNo">264</span><a name="line.264"></a>
-<span class="sourceLineNo">265</span>  private void updateCandidateWidth() {<a name="line.265"></a>
-<span class="sourceLineNo">266</span>    final int top = 0;<a name="line.266"></a>
-<span class="sourceLineNo">267</span>    final int bottom = getHeight();<a name="line.267"></a>
-<span class="sourceLineNo">268</span>    int i = 0;<a name="line.268"></a>
-<span class="sourceLineNo">269</span>    int x = 0;<a name="line.269"></a>
-<span class="sourceLineNo">270</span>    if (Rime.hasLeft()) x += getCandidateWidth(-4);<a name="line.270"></a>
-<span class="sourceLineNo">271</span>    getCandNum();<a name="line.271"></a>
-<span class="sourceLineNo">272</span>    for (i = 0; i &lt; num_candidates; i++) candidateRect[i] = new Rect(x, top, x += getCandidateWidth(i), bottom);<a name="line.272"></a>
-<span class="sourceLineNo">273</span>    if (Rime.hasLeft()) candidateRect[i++] = new Rect(0, top, (int)getCandidateWidth(-4), bottom);<a name="line.273"></a>
-<span class="sourceLineNo">274</span>    if (Rime.hasRight()) candidateRect[i++] = new Rect(x, top, x += getCandidateWidth(-5), bottom);<a name="line.274"></a>
-<span class="sourceLineNo">275</span>    LayoutParams params = getLayoutParams();<a name="line.275"></a>
-<span class="sourceLineNo">276</span>    params.width = x;<a name="line.276"></a>
-<span class="sourceLineNo">277</span>    params.height = candidate_view_height;<a name="line.277"></a>
-<span class="sourceLineNo">278</span>    if (show_comment &amp;&amp; comment_on_top) params.height += comment_height;<a name="line.278"></a>
-<span class="sourceLineNo">279</span>    setLayoutParams(params);<a name="line.279"></a>
-<span class="sourceLineNo">280</span>  }<a name="line.280"></a>
-<span class="sourceLineNo">281</span><a name="line.281"></a>
-<span class="sourceLineNo">282</span>  @Override<a name="line.282"></a>
-<span class="sourceLineNo">283</span>  protected void onSizeChanged(int w, int h, int oldw, int oldh) {<a name="line.283"></a>
-<span class="sourceLineNo">284</span>    super.onSizeChanged(w, h, oldw, oldh);<a name="line.284"></a>
-<span class="sourceLineNo">285</span>    updateCandidateWidth();<a name="line.285"></a>
-<span class="sourceLineNo">286</span>  }<a name="line.286"></a>
-<span class="sourceLineNo">287</span><a name="line.287"></a>
-<span class="sourceLineNo">288</span>  @Override<a name="line.288"></a>
-<span class="sourceLineNo">289</span>  public boolean onTouchEvent(MotionEvent me) {<a name="line.289"></a>
-<span class="sourceLineNo">290</span>    int action = me.getAction();<a name="line.290"></a>
-<span class="sourceLineNo">291</span>    int x = (int) me.getX();<a name="line.291"></a>
-<span class="sourceLineNo">292</span>    int y = (int) me.getY();<a name="line.292"></a>
-<span class="sourceLineNo">293</span><a name="line.293"></a>
-<span class="sourceLineNo">294</span>    switch (action) {<a name="line.294"></a>
-<span class="sourceLineNo">295</span>      case MotionEvent.ACTION_DOWN:<a name="line.295"></a>
-<span class="sourceLineNo">296</span>      case MotionEvent.ACTION_MOVE:<a name="line.296"></a>
-<span class="sourceLineNo">297</span>        updateHighlight(x, y);<a name="line.297"></a>
-<span class="sourceLineNo">298</span>        break;<a name="line.298"></a>
-<span class="sourceLineNo">299</span>      case MotionEvent.ACTION_UP:<a name="line.299"></a>
-<span class="sourceLineNo">300</span>        if (updateHighlight(x, y)) {<a name="line.300"></a>
-<span class="sourceLineNo">301</span>          pickHighlighted(-1);<a name="line.301"></a>
-<span class="sourceLineNo">302</span>        }<a name="line.302"></a>
-<span class="sourceLineNo">303</span>        break;<a name="line.303"></a>
-<span class="sourceLineNo">304</span>    }<a name="line.304"></a>
-<span class="sourceLineNo">305</span>    return true;<a name="line.305"></a>
-<span class="sourceLineNo">306</span>  }<a name="line.306"></a>
-<span class="sourceLineNo">307</span><a name="line.307"></a>
-<span class="sourceLineNo">308</span>  /**<a name="line.308"></a>
-<span class="sourceLineNo">309</span>   * Returns the index of the candidate which the given coordinate points to.<a name="line.309"></a>
-<span class="sourceLineNo">310</span>   * <a name="line.310"></a>
-<span class="sourceLineNo">311</span>   * @return -1 if no candidate is mapped to the given (x, y) coordinate.<a name="line.311"></a>
-<span class="sourceLineNo">312</span>   */<a name="line.312"></a>
-<span class="sourceLineNo">313</span>  private int getCandidateIndex(int x, int y) {<a name="line.313"></a>
-<span class="sourceLineNo">314</span>    Rect r = new Rect();<a name="line.314"></a>
-<span class="sourceLineNo">315</span><a name="line.315"></a>
-<span class="sourceLineNo">316</span>    int j = 0;<a name="line.316"></a>
-<span class="sourceLineNo">317</span>    for (int i = 0; i &lt; num_candidates; i++) {<a name="line.317"></a>
-<span class="sourceLineNo">318</span>      // Enlarge the rectangle to be more responsive to user clicks.<a name="line.318"></a>
-<span class="sourceLineNo">319</span>      r.set(candidateRect[j++]);<a name="line.319"></a>
-<span class="sourceLineNo">320</span>      r.inset(0, CANDIDATE_TOUCH_OFFSET);<a name="line.320"></a>
-<span class="sourceLineNo">321</span>      if (r.contains(x, y)) {<a name="line.321"></a>
-<span class="sourceLineNo">322</span>        // Returns -1 if there is no candidate in the hitting rectangle.<a name="line.322"></a>
-<span class="sourceLineNo">323</span>        return (i &lt; num_candidates) ? i : -1;<a name="line.323"></a>
-<span class="sourceLineNo">324</span>      }<a name="line.324"></a>
-<span class="sourceLineNo">325</span>    }<a name="line.325"></a>
-<span class="sourceLineNo">326</span><a name="line.326"></a>
-<span class="sourceLineNo">327</span>    if (Rime.hasLeft()) { //Page Up<a name="line.327"></a>
-<span class="sourceLineNo">328</span>      r.set(candidateRect[j++]);<a name="line.328"></a>
-<span class="sourceLineNo">329</span>      r.inset(0, CANDIDATE_TOUCH_OFFSET);<a name="line.329"></a>
-<span class="sourceLineNo">330</span>      if (r.contains(x, y)) {<a name="line.330"></a>
-<span class="sourceLineNo">331</span>        return -4;<a name="line.331"></a>
-<span class="sourceLineNo">332</span>      }<a name="line.332"></a>
-<span class="sourceLineNo">333</span>    }<a name="line.333"></a>
-<span class="sourceLineNo">334</span><a name="line.334"></a>
-<span class="sourceLineNo">335</span>    if (Rime.hasRight()) { //Page Down<a name="line.335"></a>
-<span class="sourceLineNo">336</span>      r.set(candidateRect[j++]);<a name="line.336"></a>
-<span class="sourceLineNo">337</span>      r.inset(0, CANDIDATE_TOUCH_OFFSET);<a name="line.337"></a>
-<span class="sourceLineNo">338</span>      if (r.contains(x, y)) {<a name="line.338"></a>
-<span class="sourceLineNo">339</span>        return -5;<a name="line.339"></a>
-<span class="sourceLineNo">340</span>      }<a name="line.340"></a>
-<span class="sourceLineNo">341</span>    }<a name="line.341"></a>
-<span class="sourceLineNo">342</span><a name="line.342"></a>
-<span class="sourceLineNo">343</span>    return -1;<a name="line.343"></a>
-<span class="sourceLineNo">344</span>  }<a name="line.344"></a>
-<span class="sourceLineNo">345</span><a name="line.345"></a>
-<span class="sourceLineNo">346</span>  private int getCandNum() {<a name="line.346"></a>
-<span class="sourceLineNo">347</span>    candidates = Rime.getCandidates();<a name="line.347"></a>
-<span class="sourceLineNo">348</span>    highlightIndex = Rime.getCandHighlightIndex();<a name="line.348"></a>
-<span class="sourceLineNo">349</span>    num_candidates = candidates == null ? 0 : candidates.length;<a name="line.349"></a>
-<span class="sourceLineNo">350</span>    return num_candidates;<a name="line.350"></a>
-<span class="sourceLineNo">351</span>  }<a name="line.351"></a>
-<span class="sourceLineNo">352</span><a name="line.352"></a>
-<span class="sourceLineNo">353</span>  private String getCandidate(int i) {<a name="line.353"></a>
-<span class="sourceLineNo">354</span>    String s = null;<a name="line.354"></a>
-<span class="sourceLineNo">355</span>    if (candidates != null &amp;&amp; i &gt;= 0) s = candidates[i].text;<a name="line.355"></a>
-<span class="sourceLineNo">356</span>    else if (i == -4 &amp;&amp; Rime.hasLeft()) s = "◀";<a name="line.356"></a>
-<span class="sourceLineNo">357</span>    else if (i == -5 &amp;&amp; Rime.hasRight()) s = "▶";<a name="line.357"></a>
-<span class="sourceLineNo">358</span>    return s;<a name="line.358"></a>
-<span class="sourceLineNo">359</span>  }<a name="line.359"></a>
-<span class="sourceLineNo">360</span><a name="line.360"></a>
-<span class="sourceLineNo">361</span>  private String getComment(int i) {<a name="line.361"></a>
-<span class="sourceLineNo">362</span>    String s = null;<a name="line.362"></a>
-<span class="sourceLineNo">363</span>    if (candidates != null &amp;&amp; i &gt;= 0) s = candidates[i].comment;<a name="line.363"></a>
-<span class="sourceLineNo">364</span>    return s;<a name="line.364"></a>
-<span class="sourceLineNo">365</span>  }<a name="line.365"></a>
-<span class="sourceLineNo">366</span><a name="line.366"></a>
-<span class="sourceLineNo">367</span>  private float getCandidateWidth(int i) {<a name="line.367"></a>
-<span class="sourceLineNo">368</span>    String s = getCandidate(i);<a name="line.368"></a>
-<span class="sourceLineNo">369</span>    float n = (s == null ? 0 : s.codePointCount(0, s.length()));<a name="line.369"></a>
-<span class="sourceLineNo">370</span>    n += n &lt; 2 ? 0.8f : 0.4f;<a name="line.370"></a>
-<span class="sourceLineNo">371</span>    float x = n * candidate_text_size;<a name="line.371"></a>
-<span class="sourceLineNo">372</span>    if (i &gt;= 0 &amp;&amp; show_comment) {<a name="line.372"></a>
-<span class="sourceLineNo">373</span>      String comment = getComment(i);<a name="line.373"></a>
-<span class="sourceLineNo">374</span>      if (comment != null) {<a name="line.374"></a>
-<span class="sourceLineNo">375</span>        float x2 = paintComment.measureText(comment);<a name="line.375"></a>
-<span class="sourceLineNo">376</span>        if (comment_on_top) { if (x2 &gt; x) x = x2; } //提示在上方<a name="line.376"></a>
-<span class="sourceLineNo">377</span>        else x += x2;  //提示在右方<a name="line.377"></a>
-<span class="sourceLineNo">378</span>      }<a name="line.378"></a>
-<span class="sourceLineNo">379</span>    }<a name="line.379"></a>
-<span class="sourceLineNo">380</span>    return x;<a name="line.380"></a>
-<span class="sourceLineNo">381</span>  }<a name="line.381"></a>
-<span class="sourceLineNo">382</span>}<a name="line.382"></a>
+<span class="sourceLineNo">195</span>    float x = 0;<a name="line.195"></a>
+<span class="sourceLineNo">196</span>    float y = 0;<a name="line.196"></a>
+<span class="sourceLineNo">197</span>    int i = 0;<a name="line.197"></a>
+<span class="sourceLineNo">198</span>    float comment_x, comment_y;<a name="line.198"></a>
+<span class="sourceLineNo">199</span>    float comment_width;<a name="line.199"></a>
+<span class="sourceLineNo">200</span>    String candidate, comment;<a name="line.200"></a>
+<span class="sourceLineNo">201</span><a name="line.201"></a>
+<span class="sourceLineNo">202</span>    y = candidateRect[0].centerY() - (paintCandidate.ascent() + paintCandidate.descent()) / 2;<a name="line.202"></a>
+<span class="sourceLineNo">203</span>    if (show_comment &amp;&amp; comment_on_top) y += comment_height / 2;<a name="line.203"></a>
+<span class="sourceLineNo">204</span>    comment_y = comment_height / 2 - (paintComment.ascent() + paintComment.descent()) / 2;<a name="line.204"></a>
+<span class="sourceLineNo">205</span>    if (show_comment &amp;&amp; !comment_on_top) comment_y += candidateRect[0].bottom - comment_height;<a name="line.205"></a>
+<span class="sourceLineNo">206</span><a name="line.206"></a>
+<span class="sourceLineNo">207</span>    while (i &lt; num_candidates) {<a name="line.207"></a>
+<span class="sourceLineNo">208</span>      // Calculate a position where the text could be centered in the rectangle.<a name="line.208"></a>
+<span class="sourceLineNo">209</span>      x = candidateRect[i].centerX();<a name="line.209"></a>
+<span class="sourceLineNo">210</span>      if (show_comment) {<a name="line.210"></a>
+<span class="sourceLineNo">211</span>        comment = getComment(i);<a name="line.211"></a>
+<span class="sourceLineNo">212</span>        if (comment != null &amp;&amp; !comment.isEmpty()) {<a name="line.212"></a>
+<span class="sourceLineNo">213</span>          comment_width = paintComment.measureText(comment);<a name="line.213"></a>
+<span class="sourceLineNo">214</span>          if (comment_on_top) {<a name="line.214"></a>
+<span class="sourceLineNo">215</span>            comment_x = candidateRect[i].centerX();<a name="line.215"></a>
+<span class="sourceLineNo">216</span>          } else {<a name="line.216"></a>
+<span class="sourceLineNo">217</span>            x -= comment_width / 2;<a name="line.217"></a>
+<span class="sourceLineNo">218</span>            comment_x = candidateRect[i].right -  comment_width / 2;<a name="line.218"></a>
+<span class="sourceLineNo">219</span>          }<a name="line.219"></a>
+<span class="sourceLineNo">220</span>          paintComment.setColor(highlightIndex == i ? hilited_comment_text_color : comment_text_color);<a name="line.220"></a>
+<span class="sourceLineNo">221</span>          drawText(comment, canvas, paintComment, tfComment, comment_x, comment_y);<a name="line.221"></a>
+<span class="sourceLineNo">222</span>        }<a name="line.222"></a>
+<span class="sourceLineNo">223</span>      }<a name="line.223"></a>
+<span class="sourceLineNo">224</span>      paintCandidate.setColor(highlightIndex == i ? hilited_candidate_text_color : candidate_text_color);<a name="line.224"></a>
+<span class="sourceLineNo">225</span>      drawText(getCandidate(i), canvas, paintCandidate, tfCandidate, x, y);<a name="line.225"></a>
+<span class="sourceLineNo">226</span>      // Draw the separator at the right edge of each candidate.<a name="line.226"></a>
+<span class="sourceLineNo">227</span>      candidateSeparator.setBounds(<a name="line.227"></a>
+<span class="sourceLineNo">228</span>        candidateRect[i].right - candidateSeparator.getIntrinsicWidth(),<a name="line.228"></a>
+<span class="sourceLineNo">229</span>        candidateRect[i].top,<a name="line.229"></a>
+<span class="sourceLineNo">230</span>        candidateRect[i].right,<a name="line.230"></a>
+<span class="sourceLineNo">231</span>        candidateRect[i].bottom);<a name="line.231"></a>
+<span class="sourceLineNo">232</span>      candidateSeparator.draw(canvas);<a name="line.232"></a>
+<span class="sourceLineNo">233</span>      i++;<a name="line.233"></a>
+<span class="sourceLineNo">234</span>    }<a name="line.234"></a>
+<span class="sourceLineNo">235</span>    for (int j = -4; j &gt;= -5; j--) { // -4: left, -5: right<a name="line.235"></a>
+<span class="sourceLineNo">236</span>      candidate = getCandidate(j);<a name="line.236"></a>
+<span class="sourceLineNo">237</span>      if (candidate == null) continue;<a name="line.237"></a>
+<span class="sourceLineNo">238</span>      paintSymbol.setColor(highlightIndex == i ? hilited_comment_text_color : comment_text_color);<a name="line.238"></a>
+<span class="sourceLineNo">239</span>      x = candidateRect[i].centerX() - paintSymbol.measureText(candidate) / 2;<a name="line.239"></a>
+<span class="sourceLineNo">240</span>      canvas.drawText(candidate, x, y, paintSymbol);<a name="line.240"></a>
+<span class="sourceLineNo">241</span>      candidateSeparator.setBounds(<a name="line.241"></a>
+<span class="sourceLineNo">242</span>        candidateRect[i].right - candidateSeparator.getIntrinsicWidth(),<a name="line.242"></a>
+<span class="sourceLineNo">243</span>        candidateRect[i].top,<a name="line.243"></a>
+<span class="sourceLineNo">244</span>        candidateRect[i].right,<a name="line.244"></a>
+<span class="sourceLineNo">245</span>        candidateRect[i].bottom);<a name="line.245"></a>
+<span class="sourceLineNo">246</span>      candidateSeparator.draw(canvas);<a name="line.246"></a>
+<span class="sourceLineNo">247</span>      i++;<a name="line.247"></a>
+<span class="sourceLineNo">248</span>    }<a name="line.248"></a>
+<span class="sourceLineNo">249</span>  }<a name="line.249"></a>
+<span class="sourceLineNo">250</span><a name="line.250"></a>
+<span class="sourceLineNo">251</span>  @Override<a name="line.251"></a>
+<span class="sourceLineNo">252</span>  protected void onDraw(Canvas canvas) {<a name="line.252"></a>
+<span class="sourceLineNo">253</span>    if (canvas == null) {<a name="line.253"></a>
+<span class="sourceLineNo">254</span>      return;<a name="line.254"></a>
+<span class="sourceLineNo">255</span>    }<a name="line.255"></a>
+<span class="sourceLineNo">256</span>    super.onDraw(canvas);<a name="line.256"></a>
+<span class="sourceLineNo">257</span><a name="line.257"></a>
+<span class="sourceLineNo">258</span>    drawHighlight(canvas);<a name="line.258"></a>
+<span class="sourceLineNo">259</span>    drawCandidates(canvas);<a name="line.259"></a>
+<span class="sourceLineNo">260</span>  }<a name="line.260"></a>
+<span class="sourceLineNo">261</span><a name="line.261"></a>
+<span class="sourceLineNo">262</span>  private void updateCandidateWidth() {<a name="line.262"></a>
+<span class="sourceLineNo">263</span>    final int top = 0;<a name="line.263"></a>
+<span class="sourceLineNo">264</span>    final int bottom = getHeight();<a name="line.264"></a>
+<span class="sourceLineNo">265</span>    int i = 0;<a name="line.265"></a>
+<span class="sourceLineNo">266</span>    int x = 0;<a name="line.266"></a>
+<span class="sourceLineNo">267</span>    if (Rime.hasLeft()) x += getCandidateWidth(-4);<a name="line.267"></a>
+<span class="sourceLineNo">268</span>    getCandNum();<a name="line.268"></a>
+<span class="sourceLineNo">269</span>    for (i = 0; i &lt; num_candidates; i++) candidateRect[i] = new Rect(x, top, x += getCandidateWidth(i), bottom);<a name="line.269"></a>
+<span class="sourceLineNo">270</span>    if (Rime.hasLeft()) candidateRect[i++] = new Rect(0, top, (int)getCandidateWidth(-4), bottom);<a name="line.270"></a>
+<span class="sourceLineNo">271</span>    if (Rime.hasRight()) candidateRect[i++] = new Rect(x, top, x += getCandidateWidth(-5), bottom);<a name="line.271"></a>
+<span class="sourceLineNo">272</span>    LayoutParams params = getLayoutParams();<a name="line.272"></a>
+<span class="sourceLineNo">273</span>    params.width = x;<a name="line.273"></a>
+<span class="sourceLineNo">274</span>    params.height = candidate_view_height;<a name="line.274"></a>
+<span class="sourceLineNo">275</span>    if (show_comment &amp;&amp; comment_on_top) params.height += comment_height;<a name="line.275"></a>
+<span class="sourceLineNo">276</span>    setLayoutParams(params);<a name="line.276"></a>
+<span class="sourceLineNo">277</span>  }<a name="line.277"></a>
+<span class="sourceLineNo">278</span><a name="line.278"></a>
+<span class="sourceLineNo">279</span>  @Override<a name="line.279"></a>
+<span class="sourceLineNo">280</span>  protected void onSizeChanged(int w, int h, int oldw, int oldh) {<a name="line.280"></a>
+<span class="sourceLineNo">281</span>    super.onSizeChanged(w, h, oldw, oldh);<a name="line.281"></a>
+<span class="sourceLineNo">282</span>    updateCandidateWidth();<a name="line.282"></a>
+<span class="sourceLineNo">283</span>  }<a name="line.283"></a>
+<span class="sourceLineNo">284</span><a name="line.284"></a>
+<span class="sourceLineNo">285</span>  @Override<a name="line.285"></a>
+<span class="sourceLineNo">286</span>  public boolean onTouchEvent(MotionEvent me) {<a name="line.286"></a>
+<span class="sourceLineNo">287</span>    int action = me.getAction();<a name="line.287"></a>
+<span class="sourceLineNo">288</span>    int x = (int) me.getX();<a name="line.288"></a>
+<span class="sourceLineNo">289</span>    int y = (int) me.getY();<a name="line.289"></a>
+<span class="sourceLineNo">290</span><a name="line.290"></a>
+<span class="sourceLineNo">291</span>    switch (action) {<a name="line.291"></a>
+<span class="sourceLineNo">292</span>      case MotionEvent.ACTION_DOWN:<a name="line.292"></a>
+<span class="sourceLineNo">293</span>      case MotionEvent.ACTION_MOVE:<a name="line.293"></a>
+<span class="sourceLineNo">294</span>        updateHighlight(x, y);<a name="line.294"></a>
+<span class="sourceLineNo">295</span>        break;<a name="line.295"></a>
+<span class="sourceLineNo">296</span>      case MotionEvent.ACTION_UP:<a name="line.296"></a>
+<span class="sourceLineNo">297</span>        if (updateHighlight(x, y)) {<a name="line.297"></a>
+<span class="sourceLineNo">298</span>          pickHighlighted(-1);<a name="line.298"></a>
+<span class="sourceLineNo">299</span>        }<a name="line.299"></a>
+<span class="sourceLineNo">300</span>        break;<a name="line.300"></a>
+<span class="sourceLineNo">301</span>    }<a name="line.301"></a>
+<span class="sourceLineNo">302</span>    return true;<a name="line.302"></a>
+<span class="sourceLineNo">303</span>  }<a name="line.303"></a>
+<span class="sourceLineNo">304</span><a name="line.304"></a>
+<span class="sourceLineNo">305</span>  /**<a name="line.305"></a>
+<span class="sourceLineNo">306</span>   * 獲得觸摸處候選項序號<a name="line.306"></a>
+<span class="sourceLineNo">307</span>   * @param x 觸摸點橫座標<a name="line.307"></a>
+<span class="sourceLineNo">308</span>   * @param y 觸摸點縱座標<a name="line.308"></a>
+<span class="sourceLineNo">309</span>   * @return<a name="line.309"></a>
+<span class="sourceLineNo">310</span>   * {@code &gt;=0}: 觸摸點 (x, y) 處候選項序號，從0開始編號；<a name="line.310"></a>
+<span class="sourceLineNo">311</span>   * {@code -1}: 觸摸點 (x, y) 處無候選項；<a name="line.311"></a>
+<span class="sourceLineNo">312</span>   * {@code -4}: 觸摸點 (x, y) 處爲{@code Page_Up}；<a name="line.312"></a>
+<span class="sourceLineNo">313</span>   * {@code -5}: 觸摸點 (x, y) 處爲{@code Page_Down}<a name="line.313"></a>
+<span class="sourceLineNo">314</span>   */<a name="line.314"></a>
+<span class="sourceLineNo">315</span>  private int getCandidateIndex(int x, int y) {<a name="line.315"></a>
+<span class="sourceLineNo">316</span>    Rect r = new Rect();<a name="line.316"></a>
+<span class="sourceLineNo">317</span><a name="line.317"></a>
+<span class="sourceLineNo">318</span>    int j = 0;<a name="line.318"></a>
+<span class="sourceLineNo">319</span>    for (int i = 0; i &lt; num_candidates; i++) {<a name="line.319"></a>
+<span class="sourceLineNo">320</span>      // Enlarge the rectangle to be more responsive to user clicks.<a name="line.320"></a>
+<span class="sourceLineNo">321</span>      r.set(candidateRect[j++]);<a name="line.321"></a>
+<span class="sourceLineNo">322</span>      r.inset(0, CANDIDATE_TOUCH_OFFSET);<a name="line.322"></a>
+<span class="sourceLineNo">323</span>      if (r.contains(x, y)) {<a name="line.323"></a>
+<span class="sourceLineNo">324</span>        // Returns -1 if there is no candidate in the hitting rectangle.<a name="line.324"></a>
+<span class="sourceLineNo">325</span>        return (i &lt; num_candidates) ? i : -1;<a name="line.325"></a>
+<span class="sourceLineNo">326</span>      }<a name="line.326"></a>
+<span class="sourceLineNo">327</span>    }<a name="line.327"></a>
+<span class="sourceLineNo">328</span><a name="line.328"></a>
+<span class="sourceLineNo">329</span>    if (Rime.hasLeft()) { //Page Up<a name="line.329"></a>
+<span class="sourceLineNo">330</span>      r.set(candidateRect[j++]);<a name="line.330"></a>
+<span class="sourceLineNo">331</span>      r.inset(0, CANDIDATE_TOUCH_OFFSET);<a name="line.331"></a>
+<span class="sourceLineNo">332</span>      if (r.contains(x, y)) {<a name="line.332"></a>
+<span class="sourceLineNo">333</span>        return -4;<a name="line.333"></a>
+<span class="sourceLineNo">334</span>      }<a name="line.334"></a>
+<span class="sourceLineNo">335</span>    }<a name="line.335"></a>
+<span class="sourceLineNo">336</span><a name="line.336"></a>
+<span class="sourceLineNo">337</span>    if (Rime.hasRight()) { //Page Down<a name="line.337"></a>
+<span class="sourceLineNo">338</span>      r.set(candidateRect[j++]);<a name="line.338"></a>
+<span class="sourceLineNo">339</span>      r.inset(0, CANDIDATE_TOUCH_OFFSET);<a name="line.339"></a>
+<span class="sourceLineNo">340</span>      if (r.contains(x, y)) {<a name="line.340"></a>
+<span class="sourceLineNo">341</span>        return -5;<a name="line.341"></a>
+<span class="sourceLineNo">342</span>      }<a name="line.342"></a>
+<span class="sourceLineNo">343</span>    }<a name="line.343"></a>
+<span class="sourceLineNo">344</span><a name="line.344"></a>
+<span class="sourceLineNo">345</span>    return -1;<a name="line.345"></a>
+<span class="sourceLineNo">346</span>  }<a name="line.346"></a>
+<span class="sourceLineNo">347</span><a name="line.347"></a>
+<span class="sourceLineNo">348</span>  private int getCandNum() {<a name="line.348"></a>
+<span class="sourceLineNo">349</span>    candidates = Rime.getCandidates();<a name="line.349"></a>
+<span class="sourceLineNo">350</span>    highlightIndex = Rime.getCandHighlightIndex();<a name="line.350"></a>
+<span class="sourceLineNo">351</span>    num_candidates = candidates == null ? 0 : candidates.length;<a name="line.351"></a>
+<span class="sourceLineNo">352</span>    return num_candidates;<a name="line.352"></a>
+<span class="sourceLineNo">353</span>  }<a name="line.353"></a>
+<span class="sourceLineNo">354</span><a name="line.354"></a>
+<span class="sourceLineNo">355</span>  private String getCandidate(int i) {<a name="line.355"></a>
+<span class="sourceLineNo">356</span>    String s = null;<a name="line.356"></a>
+<span class="sourceLineNo">357</span>    if (candidates != null &amp;&amp; i &gt;= 0) s = candidates[i].text;<a name="line.357"></a>
+<span class="sourceLineNo">358</span>    else if (i == -4 &amp;&amp; Rime.hasLeft()) s = "◀";<a name="line.358"></a>
+<span class="sourceLineNo">359</span>    else if (i == -5 &amp;&amp; Rime.hasRight()) s = "▶";<a name="line.359"></a>
+<span class="sourceLineNo">360</span>    return s;<a name="line.360"></a>
+<span class="sourceLineNo">361</span>  }<a name="line.361"></a>
+<span class="sourceLineNo">362</span><a name="line.362"></a>
+<span class="sourceLineNo">363</span>  private String getComment(int i) {<a name="line.363"></a>
+<span class="sourceLineNo">364</span>    String s = null;<a name="line.364"></a>
+<span class="sourceLineNo">365</span>    if (candidates != null &amp;&amp; i &gt;= 0) s = candidates[i].comment;<a name="line.365"></a>
+<span class="sourceLineNo">366</span>    return s;<a name="line.366"></a>
+<span class="sourceLineNo">367</span>  }<a name="line.367"></a>
+<span class="sourceLineNo">368</span><a name="line.368"></a>
+<span class="sourceLineNo">369</span>  private float getCandidateWidth(int i) {<a name="line.369"></a>
+<span class="sourceLineNo">370</span>    String s = getCandidate(i);<a name="line.370"></a>
+<span class="sourceLineNo">371</span>    float n = (s == null ? 0 : s.codePointCount(0, s.length()));<a name="line.371"></a>
+<span class="sourceLineNo">372</span>    n += n &lt; 2 ? 0.8f : 0.4f;<a name="line.372"></a>
+<span class="sourceLineNo">373</span>    float x = n * candidate_text_size;<a name="line.373"></a>
+<span class="sourceLineNo">374</span>    if (i &gt;= 0 &amp;&amp; show_comment) {<a name="line.374"></a>
+<span class="sourceLineNo">375</span>      String comment = getComment(i);<a name="line.375"></a>
+<span class="sourceLineNo">376</span>      if (comment != null) {<a name="line.376"></a>
+<span class="sourceLineNo">377</span>        float x2 = paintComment.measureText(comment);<a name="line.377"></a>
+<span class="sourceLineNo">378</span>        if (comment_on_top) { if (x2 &gt; x) x = x2; } //提示在上方<a name="line.378"></a>
+<span class="sourceLineNo">379</span>        else x += x2;  //提示在右方<a name="line.379"></a>
+<span class="sourceLineNo">380</span>      }<a name="line.380"></a>
+<span class="sourceLineNo">381</span>    }<a name="line.381"></a>
+<span class="sourceLineNo">382</span>    return x;<a name="line.382"></a>
+<span class="sourceLineNo">383</span>  }<a name="line.383"></a>
+<span class="sourceLineNo">384</span>}<a name="line.384"></a>
 
 
 
