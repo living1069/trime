@@ -170,6 +170,7 @@ public class KeyboardView extends View implements View.OnClickListener {
     private static final int MSG_REMOVE_PREVIEW = 2;
     private static final int MSG_REPEAT = 3;
     private static final int MSG_LONGPRESS = 4;
+    private static final int MSG_RELEASE = 5;
 
     private static final int DELAY_BEFORE_PREVIEW = 0;
     private static final int DELAY_AFTER_PREVIEW = 70;
@@ -225,6 +226,7 @@ public class KeyboardView extends View implements View.OnClickListener {
     private static int REPEAT_INTERVAL = 50; // ~20 keys per second
     private static int REPEAT_START_DELAY = 400;
     private static int LONGPRESS_TIMEOUT = ViewConfiguration.getLongPressTimeout();
+    private static int RELEASE_TIMEOUT = 100;
 
     private static int MAX_NEARBY_KEYS = 12;
     private int[] mDistances = new int[MAX_NEARBY_KEYS];
@@ -267,13 +269,18 @@ public class KeyboardView extends View implements View.OnClickListener {
                     mPreviewText.setVisibility(INVISIBLE);
                     break;
                 case MSG_REPEAT:
+                    removeMessages(MSG_RELEASE);
                     if (repeatKey()) {
                         Message repeat = Message.obtain(this, MSG_REPEAT);
-                        sendMessageDelayed(repeat, REPEAT_INTERVAL);                        
+                        sendMessageDelayed(repeat, REPEAT_INTERVAL);
                     }
                     break;
                 case MSG_LONGPRESS:
+                    removeMessages(MSG_RELEASE);
                     openPopupIfRequired((MotionEvent) msg.obj);
+                    break;
+                case MSG_RELEASE:
+                    mKeyboardActionListener.onRelease((Integer) msg.obj);
                     break;
             }
         }
@@ -344,6 +351,8 @@ public class KeyboardView extends View implements View.OnClickListener {
         REPEAT_START_DELAY = config.getInt("repeat_start_delay");
         LONGPRESS_TIMEOUT = config.getInt("longpress_timeout");
         MULTITAP_INTERVAL = config.getInt("multitap_interval");
+        if (config.hasKey("release_timeout"))
+            RELEASE_TIMEOUT = config.getInt("release_timeout");
         invalidateAllKeys();
     }
 
@@ -846,6 +855,11 @@ public class KeyboardView extends View implements View.OnClickListener {
         return primaryIndex;
     }
 
+    private void releaseKey(int code) {
+        Message msg = mHandler.obtainMessage(MSG_RELEASE, code);
+        mHandler.sendMessageDelayed(msg, RELEASE_TIMEOUT);
+    }
+
     private void detectAndSendKey(int index, int x, int y, long eventTime, int type) {
         if (index != NOT_A_KEY && index < mKeys.length) {
             final Key key = mKeys[index];
@@ -858,7 +872,7 @@ public class KeyboardView extends View implements View.OnClickListener {
                 Arrays.fill(codes, NOT_A_KEY);
                 getKeyIndices(x, y, codes);
                 mKeyboardActionListener.onEvent(key.getEvent(type));
-                mKeyboardActionListener.onRelease(code);
+                releaseKey(code);
                 resetShifted();
             }
             mLastSentIndex = index;
@@ -1175,7 +1189,7 @@ public class KeyboardView extends View implements View.OnClickListener {
         // Convert multi-pointer up/down events to single up/down events to 
         // deal with the typical multi-pointer behavior of two-thumb typing
         final int pointerCount = me.getPointerCount();
-        final int action = me.getAction();
+        final int action = me.getActionMasked();
         boolean result = false;
         final long now = me.getEventTime();
 
@@ -1208,6 +1222,7 @@ public class KeyboardView extends View implements View.OnClickListener {
             }
         }
         mOldPointerCount = pointerCount;
+
         performClick();
         return result;
     }
