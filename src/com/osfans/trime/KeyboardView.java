@@ -222,6 +222,7 @@ public class KeyboardView extends View implements View.OnClickListener {
     private int mOldPointerCount = 1;
     private float mOldPointerX;
     private float mOldPointerY;
+    private boolean lastPoint = false;
 
     private static int REPEAT_INTERVAL = 50; // ~20 keys per second
     private static int REPEAT_START_DELAY = 400;
@@ -855,12 +856,13 @@ public class KeyboardView extends View implements View.OnClickListener {
         return primaryIndex;
     }
 
-    private void releaseKey(int code) {
+    private void releaseKey(int code, boolean delay) {
         Message msg = mHandler.obtainMessage(MSG_RELEASE, code);
-        mHandler.sendMessageDelayed(msg, RELEASE_TIMEOUT);
+        if (delay) mHandler.sendMessageDelayed(msg, RELEASE_TIMEOUT);
+        else mHandler.sendMessage(msg);
     }
 
-    private void detectAndSendKey(int index, int x, int y, long eventTime, int type) {
+    private void detectAndSendKey(int index, int x, int y, long eventTime, int type, boolean delay) {
         if (index != NOT_A_KEY && index < mKeys.length) {
             final Key key = mKeys[index];
             if (key.isShift() && !key.sendBindings()) {
@@ -872,7 +874,7 @@ public class KeyboardView extends View implements View.OnClickListener {
                 Arrays.fill(codes, NOT_A_KEY);
                 getKeyIndices(x, y, codes);
                 mKeyboardActionListener.onEvent(key.getEvent(type));
-                releaseKey(code);
+                releaseKey(code, delay);
                 resetShifted();
             }
             mLastSentIndex = index;
@@ -880,8 +882,12 @@ public class KeyboardView extends View implements View.OnClickListener {
         }
     }
 
-    private void detectAndSendKey(int index, int x, int y, long eventTime) {
-        detectAndSendKey(index, x, y, eventTime, 0);
+    private void detectAndSendKey(int index, int x, int y, long eventTime, int type) {
+        detectAndSendKey(index, x, y, eventTime, type, false);
+    }
+
+    private void detectAndSendKey(int index, int x, int y, long eventTime, boolean delay) {
+        detectAndSendKey(index, x, y, eventTime, 0, delay);
     }
 
     private void showPreview(int keyIndex, int type) {
@@ -1192,6 +1198,7 @@ public class KeyboardView extends View implements View.OnClickListener {
         final int action = me.getActionMasked();
         boolean result = false;
         final long now = me.getEventTime();
+        lastPoint = (action == MotionEvent.ACTION_UP|| ((pointerCount <=1) && action == MotionEvent.ACTION_POINTER_UP));
 
         if (pointerCount != mOldPointerCount) {
             if (pointerCount == 1) {
@@ -1351,7 +1358,7 @@ public class KeyboardView extends View implements View.OnClickListener {
                 Arrays.fill(mKeyIndices, NOT_A_KEY);
                 // If we're not on a repeating key (which sends on a DOWN event)
                 if (mRepeatKeyIndex == NOT_A_KEY && !mMiniKeyboardOnScreen && !mAbortKey) {
-                    detectAndSendKey(mCurrentKey, touchX, touchY, eventTime);
+                    detectAndSendKey(mCurrentKey, touchX, touchY, eventTime, lastPoint!=true);
                 }
                 invalidateKey(keyIndex);
                 mRepeatKeyIndex = NOT_A_KEY;
@@ -1371,7 +1378,7 @@ public class KeyboardView extends View implements View.OnClickListener {
 
     private boolean repeatKey() {
         Key key = mKeys[mRepeatKeyIndex];
-        detectAndSendKey(mCurrentKey, key.x, key.y, mLastTapTime);
+        detectAndSendKey(mCurrentKey, key.x, key.y, mLastTapTime, 0);
         return true;
     }
     
